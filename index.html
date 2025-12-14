@@ -534,6 +534,11 @@
                         <p>Chưa có khách mời nào. Hãy thêm khách mới!</p>
                     </div>
                 </div>
+                <div id="guestPagination" style="display: none; margin-top: 20px; text-align: center;">
+                    <button class="btn btn-secondary" onclick="previousGuestPage()" id="prevGuestBtn">← Trang trước</button>
+                    <span style="margin: 0 15px; color: #666;">Trang <span id="currentGuestPage">1</span> / <span id="totalGuestPages">1</span></span>
+                    <button class="btn btn-secondary" onclick="nextGuestPage()" id="nextGuestBtn">Trang sau →</button>
+                </div>
             </div>
 
             <!-- RSVP Responses Section -->
@@ -623,6 +628,11 @@
         // Store RSVP data for filtering
         let allRsvpData = [];
 
+        // Store guests data for pagination
+        let allGuestsData = [];
+        let currentGuestPage = 1;
+        const GUESTS_PER_PAGE = 20;
+
         // Password
         const ADMIN_PASSWORD = 'longlanh2025@';
 
@@ -671,6 +681,7 @@
 
                 nameInput.value = '';
                 document.getElementById('brideVenueCheckbox').checked = false;
+                currentGuestPage = 1; // Reset to first page to see new guest
                 alert('✅ Đã thêm khách: ' + name + (isBrideVenue ? ' (Nhà gái)' : ''));
             } catch (error) {
                 console.error('Error adding guest:', error);
@@ -705,6 +716,7 @@
 
                 bulkInput.value = '';
                 document.getElementById('bulkBrideVenueCheckbox').checked = false;
+                currentGuestPage = 1; // Reset to first page to see new guests
                 alert(`✅ Đã thêm ${names.length} khách thành công!` + (isBrideVenue ? ' (Nhà gái)' : ''));
             } catch (error) {
                 console.error('Error adding bulk guests:', error);
@@ -799,6 +811,7 @@
                 const guestListDiv = document.getElementById('guestList');
 
                 if (!guests) {
+                    allGuestsData = [];
                     guestListDiv.innerHTML = `
                         <div class="empty-state">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -812,31 +825,71 @@
                     `;
                     document.getElementById('totalGuests').textContent = '0';
                     document.getElementById('guestCount').textContent = '0';
+                    document.getElementById('guestPagination').style.display = 'none';
                     return;
                 }
 
-                const guestArray = Object.entries(guests).map(([id, data]) => ({ id, ...data }));
-                guestArray.sort((a, b) => b.createdAt - a.createdAt);
+                allGuestsData = Object.entries(guests).map(([id, data]) => ({ id, ...data }));
+                allGuestsData.sort((a, b) => b.createdAt - a.createdAt);
 
-                document.getElementById('totalGuests').textContent = guestArray.length;
-                document.getElementById('guestCount').textContent = guestArray.length;
+                document.getElementById('totalGuests').textContent = allGuestsData.length;
+                document.getElementById('guestCount').textContent = allGuestsData.length;
 
-                guestListDiv.innerHTML = guestArray.map(guest => `
-                    <div class="guest-item">
-                        <div class="guest-header">
-                            <div class="guest-name">${guest.name}</div>
-                            <div class="guest-actions">
-                                <button class="btn btn-danger" onclick="deleteGuest('${guest.id}', '${guest.name}')">Xóa</button>
-                            </div>
-                        </div>
-                        <div class="guest-url">
-                            <span>${guest.url}</span>
-                            <button class="copy-btn" onclick="copyUrl('${guest.url}', this)">Copy</button>
-                        </div>
-                    </div>
-                `).join('');
+                displayGuestsPage();
             });
         }
+
+        function displayGuestsPage() {
+            const guestListDiv = document.getElementById('guestList');
+            const totalPages = Math.ceil(allGuestsData.length / GUESTS_PER_PAGE);
+
+            // Update pagination info
+            document.getElementById('currentGuestPage').textContent = currentGuestPage;
+            document.getElementById('totalGuestPages').textContent = totalPages;
+
+            // Show/hide pagination
+            document.getElementById('guestPagination').style.display = totalPages > 1 ? 'block' : 'none';
+
+            // Enable/disable buttons
+            document.getElementById('prevGuestBtn').disabled = currentGuestPage === 1;
+            document.getElementById('nextGuestBtn').disabled = currentGuestPage === totalPages;
+
+            // Calculate start and end index
+            const startIndex = (currentGuestPage - 1) * GUESTS_PER_PAGE;
+            const endIndex = Math.min(startIndex + GUESTS_PER_PAGE, allGuestsData.length);
+            const currentGuests = allGuestsData.slice(startIndex, endIndex);
+
+            // Display guests
+            guestListDiv.innerHTML = currentGuests.map(guest => `
+                <div class="guest-item">
+                    <div class="guest-header">
+                        <div class="guest-name">${guest.name}</div>
+                        <div class="guest-actions">
+                            <button class="btn btn-danger" onclick="deleteGuest('${guest.id}', '${guest.name}')">Xóa</button>
+                        </div>
+                    </div>
+                    <div class="guest-url">
+                        <span>${guest.url}</span>
+                        <button class="copy-btn" onclick="copyUrl('${guest.url}', this)">Copy</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.previousGuestPage = function() {
+            if (currentGuestPage > 1) {
+                currentGuestPage--;
+                displayGuestsPage();
+            }
+        };
+
+        window.nextGuestPage = function() {
+            const totalPages = Math.ceil(allGuestsData.length / GUESTS_PER_PAGE);
+            if (currentGuestPage < totalPages) {
+                currentGuestPage++;
+                displayGuestsPage();
+            }
+        };
 
         // Load RSVP data
         function loadRsvpData() {
