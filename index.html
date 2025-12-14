@@ -977,6 +977,7 @@
                                 ${sideLabel}
                             </span>
                         </td>
+                        <td>${rsvp.venue || '-'}</td>
                         <td style="text-align: center;">${isAttending ? rsvp.guestCount : '-'}</td>
                         <td>${isAttending && rsvp.phone ? rsvp.phone : '-'}</td>
                         <td>${isAttending && rsvp.email ? rsvp.email : '-'}</td>
@@ -997,6 +998,7 @@
                                 <th>Tên</th>
                                 <th>Trạng thái</th>
                                 <th>Bên</th>
+                                <th>Tiệc</th>
                                 <th>Số người</th>
                                 <th>Điện thoại</th>
                                 <th>Email</th>
@@ -1030,7 +1032,7 @@
 
             // Create CSV header
             let csv = '\ufeff'; // UTF-8 BOM
-            csv += 'STT,Tên,Bên,Tham dự,Số người,Điện thoại,Email,Phương tiện,Địa điểm đón,Ghi chú,Thời gian\n';
+            csv += 'STT,Tên,Bên,Tiệc,Tham dự,Số người,Điện thoại,Email,Phương tiện,Địa điểm đón,Ghi chú,Thời gian\n';
 
             // Add data rows
             allRsvpData.forEach((rsvp, index) => {
@@ -1040,7 +1042,7 @@
                 const pickupLabel = rsvp.pickupLocation ? pickupLabels[rsvp.pickupLocation] || rsvp.pickupLocation : '-';
                 const date = new Date(rsvp.timestamp).toLocaleString('vi-VN');
 
-                csv += `${index + 1},"${rsvp.name}","${sideLabel}","${attendanceLabel}",`;
+                csv += `${index + 1},"${rsvp.name}","${sideLabel}","${rsvp.venue || '-'}","${attendanceLabel}",`;
                 csv += `"${rsvp.guestCount || '-'}","${rsvp.phone || '-'}","${rsvp.email || '-'}",`;
                 csv += `"${transportLabel}","${pickupLabel}","${(rsvp.note || '-').replace(/"/g, '""')}","${date}"\n`;
             });
